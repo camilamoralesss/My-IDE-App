@@ -1,0 +1,7 @@
+{
+  "appId": "com.camilamorales.codepad",
+  "appName": "CodePad",
+  "webDir": "dist",
+  "android": { "allowMixedContent": false },
+  "ios": { "contentInset": "never" }
+}

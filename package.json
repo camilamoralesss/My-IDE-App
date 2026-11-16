@@ -1,0 +1,46 @@
+{
+  "name": "codepad",
+  "version": "1.0.0",
+  "description": "Editor de código para Android e iOS: Python, HTML, CSS, JavaScript y SQL",
+  "scripts": {
+    "runtimes": "node scripts/copy-runtimes.mjs",
+    "predev": "npm run runtimes",
+    "dev": "vite",
+    "prebuild": "npm run runtimes",
+    "build": "vite build",
+    "preview": "vite preview",
+    "android": "npm run build && npx cap sync android && npx cap open android",
+    "ios": "npm run build && npx cap sync ios && npx cap open ios"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/camilamoralesss/My-IDE-App.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/camilamoralesss/My-IDE-App/issues"
+  },
+  "homepage": "https://github.com/camilamoralesss/My-IDE-App#readme",
+  "dependencies": {
+    "@capacitor/core": "^8.6.2",
+    "@codemirror/lang-css": "^6.3.1",
+    "@codemirror/lang-html": "^6.4.12",
+    "@codemirror/lang-javascript": "^6.2.5",
+    "@codemirror/lang-python": "^6.2.1",
+    "@codemirror/lang-sql": "^6.10.0",
+    "@codemirror/theme-one-dark": "^6.1.3",
+    "codemirror": "^6.0.2",
+    "pyodide": "^314.0.8",
+    "sql.js": "^1.16.0",
+    "@capacitor/android": "^8.6.2",
+    "@capacitor/ios": "^8.6.2"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.6.2",
+    "vite": "^8.3.8"
+  },
+  "private": true,
+  "type": "module"
+}

@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content" />
+  <meta name="theme-color" content="#1e2127" />
+  <title>CodePad</title>
+</head>
+<body>
+  <div id="app">
+    <header class="topbar">
+      <button id="btn-files" class="icon-btn" aria-label="Archivos">☰</button>
+      <div class="title">
+        <span id="file-lang" class="badge">PY</span>
+        <span id="file-name">main.py</span>
+      </div>
+      <button id="btn-run" class="run-btn" aria-label="Ejecutar">▶ Ejecutar</button>
+    </header>
+
+    <nav class="tabs" role="tablist">
+      <button class="tab active" data-view="editor">Código</button>
+      <button class="tab" data-view="output">Resultado</button>
+    </nav>
+
+    <main class="workspace">
+      <section id="editor-pane" class="pane active">
+        <div id="editor"></div>
+        <div id="keybar" class="keybar"></div>
+      </section>
+      <section id="output-pane" class="pane">
+        <div class="output-toolbar">
+          <span id="status">Listo</span>
+          <span class="spacer"></span>
+          <button id="btn-reset-db" class="small-btn" hidden>Reiniciar BD</button>
+          <button id="btn-clear" class="small-btn">Limpiar</button>
+        </div>
+        <iframe id="preview" title="Vista previa" sandbox="allow-scripts allow-modals allow-forms allow-popups" hidden></iframe>
+        <div id="console" class="console" aria-live="polite"></div>
+      </section>
+    </main>
+
+    <aside id="drawer" class="drawer" aria-hidden="true">
+      <div class="drawer-head">
+        <strong>Archivos</strong>
+        <button id="btn-close-files" class="icon-btn" aria-label="Cerrar">✕</button>
+      </div>
+      <ul id="file-list" class="file-list"></ul>
+      <div class="drawer-actions">
+        <button id="btn-new-file" class="small-btn">＋ Nuevo archivo</button>
+        <button id="btn-restore" class="small-btn ghost">Restaurar ejemplos</button>
+      </div>
+      <p class="hint">Extensiones: .py .html .css .js .sql<br/>Los .css y .js se cargan en index.html si los enlazas con &lt;link&gt; o &lt;script src&gt;.</p>
+    </aside>
+    <div id="scrim" class="scrim"></div>
+  </div>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
