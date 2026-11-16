@@ -18,6 +18,13 @@ const CONSOLE_BRIDGE = `<script>
   window.addEventListener('error', function(e){
     send('error', [(e.error && e.error.stack) || (e.message + ' (línea ' + e.lineno + ')')]);
   });
+  // Modo Live: el editor envía el CSS nuevo y se reemplaza sin recargar la página.
+  window.addEventListener('message', function(e){
+    var d = e.data;
+    if (!d || !d.__codepadCss) return;
+    var el = document.querySelector('style[data-file="' + d.file + '"]');
+    if (el) el.textContent = d.css;
+  });
   window.addEventListener('unhandledrejection', function(e){ send('error', ['Promesa rechazada: ' + fmt(e.reason)]); });
 })();
 <\/script>`;
@@ -59,3 +66,6 @@ export function pickHtmlFor(filename, files) {
   const linking = htmls.find((h) => files[h].includes(filename));
   return linking || (htmls.includes('index.html') ? 'index.html' : htmls[0]);
 }
+
+/** ¿Este archivo se ve en la vista previa web? */
+export const isWebFile = (name) => /\.(html|css|js)$/i.test(name);

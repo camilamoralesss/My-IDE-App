@@ -13,12 +13,14 @@ import { sql } from '@codemirror/lang-sql';
 import { loadFiles, saveFiles, loadCurrent, saveCurrent, restoreDefaults } from './storage.js';
 import { runPython } from './runners/python.js';
 import { runSql, resetDb } from './runners/sql.js';
-import { buildHtml, buildJsOnly, pickHtmlFor } from './runners/web.js';
+import { buildHtml, buildJsOnly, pickHtmlFor, isWebFile } from './runners/web.js';
 
 // ---------- Estado ----------
 let files = loadFiles();
 let current = loadCurrent(files);
 const states = new Map(); // un EditorState por archivo (conserva deshacer/rehacer)
+let liveOn = true;           // vista previa en vivo para HTML/CSS/JS
+try { liveOn = localStorage.getItem('codepad.live.v1') !== 'off'; } catch { /* noop */ }
 
 const $ = (id) => document.getElementById(id);
 const ext = (name) => name.split('.').pop().toLowerCase();
@@ -48,6 +50,7 @@ function makeState(name) {
         files[current] = u.state.doc.toString();
         clearTimeout(saveTimer);
         saveTimer = setTimeout(() => saveFiles(files), 400);
+        if (liveOn && isWebFile(current)) scheduleLive();
       }),
     ],
   });
@@ -65,6 +68,8 @@ function openFile(name, { keepPrevious = true } = {}) {
   $('file-lang').textContent = LANGS[ext(name)]?.label ?? ext(name).toUpperCase();
   $('btn-reset-db').hidden = ext(name) !== 'sql';
   renderFileList();
+  applyLayout();
+  if (liveOn && isWebFile(name)) renderWeb();
 }
 
 // ---------- Barra de símbolos (teclado móvil) ----------
@@ -163,19 +168,8 @@ async function run() {
           line(`OK · ${r.changes} fila(s) afectada(s)`, 'out');
         }
       }
-    } else if (kind === 'html' || kind === 'css' || kind === 'js') {
-      let doc;
-      const htmlFile = kind === 'html' ? current : pickHtmlFor(current, files);
-      if (kind === 'js' && !(htmlFile && files[htmlFile].includes(current))) {
-        doc = buildJsOnly(files[current], current); // JS suelto: solo consola
-        preview.hidden = true;
-      } else if (htmlFile) {
-        doc = buildHtml(files[htmlFile], files);
-        preview.hidden = false;
-      } else {
-        line('Crea un index.html que enlace este archivo para verlo.', 'warn');
-      }
-      if (doc) preview.srcdoc = doc;
+    } else if (isWebFile(current)) {
+      renderWeb();
     } else {
       line(`No sé ejecutar archivos .${kind}`, 'warn');
     }
@@ -187,6 +181,59 @@ async function run() {
     running = false;
     $('btn-run').disabled = false;
   }
+}
+
+// ---------- Vista previa web y modo Live ----------
+let shownHtml = null; // qué archivo .html está mostrando el iframe ahora mismo
+let liveTimer;
+
+/** Construye la página (HTML + CSS + JS del proyecto) y la carga en el iframe. */
+function renderWeb() {
+  clearOutput();
+  const kind = ext(current);
+  const htmlFile = kind === 'html' ? current : pickHtmlFor(current, files);
+  if (kind === 'js' && !(htmlFile && files[htmlFile].includes(current))) {
+    shownHtml = null;
+    preview.hidden = true; // JS suelto: solo consola
+    preview.srcdoc = buildJsOnly(files[current], current);
+  } else if (htmlFile) {
+    shownHtml = htmlFile;
+    preview.hidden = false;
+    preview.srcdoc = buildHtml(files[htmlFile], files);
+  } else {
+    shownHtml = null;
+    line('Crea un index.html que enlace este archivo para verlo.', 'warn');
+  }
+  setStatus(liveOn ? '● Live' : 'Listo');
+}
+
+/** Se llama al escribir: espera a que pares un momento y actualiza. */
+function scheduleLive() {
+  clearTimeout(liveTimer);
+  liveTimer = setTimeout(() => {
+    // CSS: se inyecta sin recargar, así no pierdes el estado de la página.
+    if (ext(current) === 'css' && shownHtml && files[shownHtml]?.includes(current) && !preview.hidden) {
+      preview.contentWindow?.postMessage({ __codepadCss: true, file: current, css: files[current] }, '*');
+    } else {
+      renderWeb();
+    }
+  }, 600);
+}
+
+/** En móvil, con Live activo y un archivo web, muestra editor y vista previa a la vez. */
+function applyLayout() {
+  const split = liveOn && isWebFile(current);
+  $('app').classList.toggle('live-split', split);
+  $('btn-live').setAttribute('aria-pressed', String(liveOn));
+  $('btn-live').hidden = !isWebFile(current);
+}
+
+function toggleLive() {
+  liveOn = !liveOn;
+  try { localStorage.setItem('codepad.live.v1', liveOn ? 'on' : 'off'); } catch { /* noop */ }
+  applyLayout();
+  if (liveOn && isWebFile(current)) renderWeb();
+  else setStatus('Listo');
 }
 
 // ---------- Archivos ----------
@@ -265,6 +312,7 @@ function showView(v) {
 
 // ---------- Eventos ----------
 $('btn-run').onclick = run;
+$('btn-live').onclick = toggleLive;
 $('btn-files').onclick = () => toggleDrawer(true);
 $('btn-close-files').onclick = () => toggleDrawer(false);
 $('scrim').onclick = () => toggleDrawer(false);
